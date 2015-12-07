@@ -1,0 +1,21 @@
+{
+  "name": "node-required",
+  "version": "1.0.0",
+  "description": "cli tool for reporting required files",
+  "bin": {
+    "node-required": "bin/required"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nomilous/node-required.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nomilous/node-required/issues"
+  },
+  "homepage": "https://github.com/nomilous/node-required#readme"
+}

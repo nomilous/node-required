@@ -1,2 +1,4 @@
-# require-trace
-cli tool for reporting required files
+# node-required
+
+node cli tool for tracing and reporting required files
+
