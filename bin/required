@@ -1,1 +1,143 @@
 #!/usr/bin/env node
+
+var fs = require('fs');
+var os = require('os');
+var path = require('path');
+
+var usage = function() {
+
+  console.log('\nUsage: node-required [options] jsfilename\n');
+  console.log('Outputs a listing of dependencies (filenames)\n');
+  console.log('Options:\n');
+  console.log('  -j                    output as json array\n');
+  console.log('\n');
+
+}
+
+var args = process.argv.slice(2);
+
+var filename;
+
+var asJson = false;
+
+args.forEach(function(arg) {
+  
+  if (arg[0] !== '-') return filename = arg;
+  
+  for (var i = 1; i < arg.length; i++) {
+
+    switch(arg[i]) {
+
+      case 'h':
+
+        usage();
+        process.exit(1);
+
+      case 'j': 
+
+        asJson = true;
+        break;
+
+    }
+
+  }
+
+});
+
+if (!filename) {
+  usage();
+  process.exit(1)
+}
+
+var dir = path.dirname(filename);
+var commenting = false;
+var content = fs.readFileSync(filename).toString();
+var cleared = '';
+
+// remove block comments
+
+for (var i = 0; i < content.length; i++) {
+  if (content[i] == '/' && content[i + 1] == '*') commenting = true;
+  if (content[i] == '*' && content[i + 1] == '/') commenting = false;
+  if (!commenting) cleared += content[i];
+}
+
+var modules = cleared.split(os.EOL)
+
+// remove line comments
+
+.map(function(line) {
+  var place = line.indexOf('//');
+  if (place < 0) return line;
+  return line.substr(0, place);
+})
+
+// find require("thing") or require('thing')
+
+.map(function(line) {
+  var match = line.match(/require\w*\('(.*)'\)/);
+  if (match) return match[1];
+  match = line.match(/require\w*\("(.*)"\)/);
+  if (match) return match[1];
+})
+
+// remove where none found on line
+
+.filter(function(name) {
+  return !!name;
+})
+
+// Reset module path relative to filename
+// (might be some issues here through windows)
+
+var pathParts = dir.split(path.sep)
+
+var newPaths = [];
+
+for (var i = 0; i < pathParts.length; i++) {
+  newPaths.unshift(pathParts.slice(0, i + 1).join(path.sep) + path.sep + 'node_modules');
+}
+
+module.paths = newPaths;
+
+// Require all modules
+// 
+// A problem if any of them do anything silly
+// like output text at require time or actually
+// run stuff.
+
+for (var i = 0; i < modules.length; i++) {
+  var modulePath = modules[i];
+  if (modulePath[0] == '.') {
+    modulePath = path.normalize(dir + path.sep + modulePath);
+    try {
+      require(modulePath);
+    } catch (e) {
+      modulePath = process.cwd() + path.sep + modulePath;
+      try {
+        require(modulePath);
+      } catch (f) {
+        throw e;
+      }
+    }
+  }
+  else {
+    require(modulePath);
+  }
+}
+
+var files = Object.keys(require.cache);
+
+files = files.filter(function(file) {
+  return file !== __filename;
+});
+
+if (asJson) {
+  console.log(JSON.stringify({files: files}, null, 2));
+  return;
+}
+
+for (var i = 0; i < files.length; i++) {
+  console.log(files[i]);
+}
+
