@@ -114,10 +114,12 @@ for (var i = 0; i < pathParts.length; i++) {
 module.paths = newPaths;
 
 // Require all modules
-// 
-// A problem if any of them do anything silly
-// like output text at require time or actually
-// run stuff.
+
+// But first ensure eny noise they make is silenced
+
+var original = process.stdout.write;
+process.stdout.write = function() {};
+process.stderr.write = function() {};
 
 for (var i = 0; i < modules.length; i++) {
   var modulePath = modules[i];
@@ -144,12 +146,15 @@ files = files.filter(function(file) {
   return file !== __filename;
 });
 
+// results
+
+process.stdout.write = original;
+
 
 // var tree = {};
 // var keys = [];
 // files.forEach(function(file) {
 // });
-
 
 if (asJson) {
   console.log(JSON.stringify({files: files /*, tree: tree */}, null, 2));
