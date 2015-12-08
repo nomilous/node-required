@@ -9,7 +9,9 @@ var usage = function() {
   console.log('\nUsage: node-required [options] jsfilename\n');
   console.log('Outputs a listing of dependencies (filenames)\n');
   console.log('Options:\n');
-  console.log('  -j                    output as json array');
+  console.log('  -h              help');
+  console.log('  -i              include jsfilename in listing');
+  console.log('  -j              output as json array');
   // console.log('  -t                    include tree in output');
   console.log('\n');
 
@@ -19,6 +21,7 @@ var args = process.argv.slice(2);
 
 var filename;
 
+var includeSelf = false;
 var asJson = false;
 var withTree = false;
 
@@ -34,6 +37,11 @@ args.forEach(function(arg) {
 
         usage();
         process.exit(1);
+
+      case 'i':
+
+        includeSelf = true;
+        break;
 
       case 'j':
 
@@ -61,7 +69,6 @@ var dir = path.dirname(filename);
 if (dir[0] != '/' && dir[1] != ':') {
   dir = path.normalize(process.cwd() + path.sep + dir);
 }
-
 
 var commenting = false;
 var content = fs.readFileSync(filename).toString();
@@ -155,6 +162,14 @@ process.stdout.write = original;
 // var keys = [];
 // files.forEach(function(file) {
 // });
+
+if (includeSelf) {
+  if (filename[0] != '/' && filename[1] != ':') {
+    files.unshift(path.normalize(process.cwd() + path.sep + filename));
+  } else {
+    files.unshift(filename);
+  }
+}
 
 if (asJson) {
   console.log(JSON.stringify({files: files /*, tree: tree */}, null, 2));
