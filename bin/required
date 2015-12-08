@@ -9,7 +9,8 @@ var usage = function() {
   console.log('\nUsage: node-required [options] jsfilename\n');
   console.log('Outputs a listing of dependencies (filenames)\n');
   console.log('Options:\n');
-  console.log('  -j                    output as json array\n');
+  console.log('  -j                    output as json array');
+  // console.log('  -t                    include tree in output');
   console.log('\n');
 
 }
@@ -19,6 +20,7 @@ var args = process.argv.slice(2);
 var filename;
 
 var asJson = false;
+var withTree = false;
 
 args.forEach(function(arg) {
   
@@ -33,10 +35,15 @@ args.forEach(function(arg) {
         usage();
         process.exit(1);
 
-      case 'j': 
+      case 'j':
 
         asJson = true;
         break;
+
+      // case 't':
+
+      //   withTree = true;
+      //   asJson = true;
 
     }
 
@@ -49,7 +56,13 @@ if (!filename) {
   process.exit(1)
 }
 
-var dir = path.dirname(filename);
+var dir = path.dirname(filename);     
+                                // windows?
+if (dir[0] != '/' && dir[1] != ':') {
+  dir = path.normalize(process.cwd() + path.sep + dir);
+}
+
+
 var commenting = false;
 var content = fs.readFileSync(filename).toString();
 var cleared = '';
@@ -90,7 +103,7 @@ var modules = cleared.split(os.EOL)
 // Reset module path relative to filename
 // (might be some issues here through windows)
 
-var pathParts = dir.split(path.sep)
+var pathParts = dir.split(path.sep);
 
 var newPaths = [];
 
@@ -127,13 +140,19 @@ for (var i = 0; i < modules.length; i++) {
 }
 
 var files = Object.keys(require.cache);
-
 files = files.filter(function(file) {
   return file !== __filename;
 });
 
+
+// var tree = {};
+// var keys = [];
+// files.forEach(function(file) {
+// });
+
+
 if (asJson) {
-  console.log(JSON.stringify({files: files}, null, 2));
+  console.log(JSON.stringify({files: files /*, tree: tree */}, null, 2));
   return;
 }
 
