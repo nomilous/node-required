@@ -61,6 +61,7 @@ args.forEach(function(arg) {
       case 'x':
 
         excludeNext = true;
+        break;
 
 
       // case 't':
@@ -161,7 +162,6 @@ for (var i = 0; i < modules.length; i++) {
     try {
       require(modulePath);
     } catch (e) {
-      if (e.message.match(/^skip module/)) continue;
       modulePath = process.cwd() + path.sep + modulePath;
       try {
         require(modulePath);
@@ -171,7 +171,12 @@ for (var i = 0; i < modules.length; i++) {
     }
   }
   else {
-    require(modulePath);
+    try {
+      require(modulePath);
+    } catch (e) {
+      if (e.message.match(/^skip module/)) continue;
+      throw e;
+    }
   }
 }
 
