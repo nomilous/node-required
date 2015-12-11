@@ -8,7 +8,7 @@ sudo npm install -g node-required
 
 // -j outputs json
 
-node-required -j lib/file.js
+node-required -j api/file.js
 {
   files: [
     '/list/of/files.js',
@@ -16,5 +16,10 @@ node-required -j lib/file.js
     '/specified/file.js'
   ]
 }
+
+
+// -x skips module
+
+node-required -x aws-sdk api/file.js
 
 ```

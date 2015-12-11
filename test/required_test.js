@@ -51,6 +51,7 @@ describe('node-required', function() {
     exec('node ' + required + ' -j ' + __filename, function(e, stdout) {
       if (e) return done(e);
       var parsed = JSON.parse(stdout);
+      console.log(parsed);
       parsed.files[0].should.match(/should\/index.js/)
       done();
     });

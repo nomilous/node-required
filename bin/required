@@ -12,6 +12,8 @@ var usage = function() {
   console.log('  -h              help');
   console.log('  -i              include jsfilename in listing');
   console.log('  -j              output as json array');
+  console.log('  -x [module]     exclude module name from listing');
+  console.log('  -x [another]    exclude another module name');
   // console.log('  -t                    include tree in output');
   console.log('\n');
 
@@ -24,8 +26,16 @@ var filename;
 var includeSelf = false;
 var asJson = false;
 var withTree = false;
+var excludeNext = false;
+var excluded = [];
 
 args.forEach(function(arg) {
+
+  if (excludeNext) {
+    excludeNext = false;
+    excluded.push(arg);
+    return;
+  }
   
   if (arg[0] !== '-') return filename = arg;
   
@@ -47,6 +57,11 @@ args.forEach(function(arg) {
 
         asJson = true;
         break;
+
+      case 'x':
+
+        excludeNext = true;
+
 
       // case 't':
 
@@ -128,6 +143,17 @@ var original = process.stdout.write;
 process.stdout.write = function() {};
 process.stderr.write = function() {};
 
+
+var lstatSync = fs.lstatSync;
+fs.lstatSync = function(name) {
+  var last = name.split(path.sep).pop()
+  if (excluded.indexOf(last) >= 0 ) {
+    throw new Error('skip module ' + last);
+  }
+  return lstatSync.apply(this, arguments);
+}
+
+
 for (var i = 0; i < modules.length; i++) {
   var modulePath = modules[i];
   if (modulePath[0] == '.') {
@@ -135,6 +161,7 @@ for (var i = 0; i < modules.length; i++) {
     try {
       require(modulePath);
     } catch (e) {
+      if (e.message.match(/^skip module/)) continue;
       modulePath = process.cwd() + path.sep + modulePath;
       try {
         require(modulePath);
@@ -149,9 +176,10 @@ for (var i = 0; i < modules.length; i++) {
 }
 
 var files = Object.keys(require.cache);
+
 files = files.filter(function(file) {
   return file !== __filename;
-});
+})
 
 // results
 
