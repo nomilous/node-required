@@ -141,9 +141,11 @@ module.paths = newPaths;
 // But first ensure eny noise they make is silenced
 
 var original = process.stdout.write;
-process.stdout.write = function() {};
-process.stderr.write = function() {};
+// process.stdout.write = function() {};
+// process.stderr.write = function() {};
 
+
+var links = {};
 
 var lstatSync = fs.lstatSync;
 fs.lstatSync = function(name) {
@@ -151,9 +153,23 @@ fs.lstatSync = function(name) {
   if (excluded.indexOf(last) >= 0 ) {
     throw new Error('skip module ' + last);
   }
-  return lstatSync.apply(this, arguments);
-}
+  var result = lstatSync.apply(this, arguments);
 
+  var firstName = name;
+  var firstResult = result;
+
+  // walk symlinks
+  while (result.isSymbolicLink()) {
+    name = fs.readlinkSync(name);
+    var skip = false;
+    for (var key in links) {
+      if (links[key] == name) skip = true;
+    }
+    if (!skip) links[firstName] = name;
+    result = lstatSync(name);
+  }
+  return firstResult;
+}
 
 for (var i = 0; i < modules.length; i++) {
   var modulePath = modules[i];
@@ -205,7 +221,7 @@ if (includeSelf) {
 }
 
 if (asJson) {
-  console.log(JSON.stringify({files: files /*, tree: tree */}, null, 2));
+  console.log(JSON.stringify({files: files, links: links /*, tree: tree */}, null, 2));
   return;
 }
 
