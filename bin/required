@@ -141,8 +141,8 @@ module.paths = newPaths;
 // But first ensure eny noise they make is silenced
 
 var original = process.stdout.write;
-// process.stdout.write = function() {};
-// process.stderr.write = function() {};
+process.stdout.write = function() {};
+process.stderr.write = function() {};
 
 
 var links = {};
